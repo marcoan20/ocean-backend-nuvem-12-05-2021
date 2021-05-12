@@ -45,6 +45,8 @@ const { MongoClient, ObjectId } = require('mongodb');
 
     if (!mensagem) {
       res.send('Mensagem não encontrada.');
+
+      return;
     }
 
     res.send(mensagem);
