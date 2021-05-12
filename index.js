@@ -3,83 +3,82 @@ const { MongoClient, ObjectId } = require('mongodb');
 
 (async () => {
 
-const url = 'mongodb://localhost:27017';
+  const url = 'mongodb+srv://admin:MVhyXlPJWaD2Cfbq@cluster0.7fu0x.mongodb.net/ocean_db?retryWrites=true&w=majority';
 
-const dbName = 'ocean_bancodados_11_05_2021';
+  const dbName = 'ocean_db';
 
-console.info('Conectando ao banco de dados...');
 
-const client = await MongoClient.connect(url, { useUnifiedTopology: true });
+  console.info('Conectando ao banco de dados...');
 
-console.info('MongoDB conectado com sucesso!!');
+  const client = await MongoClient.connect(url, { useUnifiedTopology: true });
 
-const db = client.db(dbName);
+  console.info('MongoDB conectado com sucesso!!');
 
-const app = express();
+  const db = client.db(dbName);
 
-app.use(express.json());
+  const app = express();
 
-app.get('/hello', function (req, res) {
-  res.send('Hello World');
-});
+  app.use(express.json());
 
-const mensagens = ['Essa é a primeira mensagem!', 'Essa é a segunda mensagem!'];
+  app.get('/hello', function (req, res) {
+    res.send('Hello World');
+  });
 
-const mensagensCollection = db.collection('mensagens');
+  const mensagens = ['Essa é a primeira mensagem!', 'Essa é a segunda mensagem!'];
 
-// CRUD (Create, Read, Update, Delete)
+  const mensagensCollection = db.collection('mensagens');
 
-// GET: READ ALL (exibir todos os registros)
-app.get('/mensagens', async (req, res) => {
-  const listaMensagens = await mensagensCollection.find().toArray();
+  // CRUD (Create, Read, Update, Delete)
 
-  res.send(listaMensagens);
-});
+  // GET: READ ALL (exibir todos os registros)
+  app.get('/mensagens', async (req, res) => {
+    const listaMensagens = await mensagensCollection.find().toArray();
 
-// GET: READ SINGLE (exibir apenas um registro)
-app.get('/mensagens/:id', (req, res) => {
-  const id = req.params.id - 1;
+    res.send(listaMensagens);
+  });
 
-  const mensagem = mensagens[id];
+  // GET: READ SINGLE (exibir apenas um registro)
+  app.get('/mensagens/:id', async (req, res) => {
+    const id = req.params.id;
 
-  if (!mensagem) {
-    res.send('Mensagem não encontrada.');
-  }
+    const mensagem = await mensagensCollection.findOne({_id: ObjectId(id)});
 
-  res.send(mensagem);
-});
+    if (!mensagem) {
+      res.send('Mensagem não encontrada.');
+    }
 
-// POST: CREATE (criar um registro)
-app.post('/mensagens', (req, res) => {
-  const mensagem = req.body.mensagem;
+    res.send(mensagem);
+  });
 
-  mensagens.push(mensagem);
+  // POST: CREATE (criar um registro)
+  app.post('/mensagens', async (req, res) => {
+    const mensagem = req.body;
 
-  const id = mensagens.length;
+    await mensagensCollection.insertOne(mensagem);
 
-  res.send(`Mensagem '${id}' criada com sucesso.`);
-});
+    res.send(mensagem);
+  });
 
-// PUT: UPDATE (editar um registro)
-app.put('/mensagens/:id', (req, res) => {
-  const id = req.params.id - 1;
+  // PUT: UPDATE (editar um registro)
+  app.put('/mensagens/:id', async (req, res) => {
+    const id = req.params.id;
 
-  const mensagem = req.body.mensagem;
+    const mensagem = req.body;
 
-  mensagens[id] = mensagem;
+    await mensagensCollection.updateOne({_id: ObjectId(id)}, {$set: mensagem});
 
-  res.send('Mensagem atualizada com sucesso.');
-});
+    res.send('Mensagem atualizada com sucesso.');
+  });
 
-// DELETE: DELETE (remover um registro)
-app.delete('/mensagens/:id', (req, res) => {
-  const id = req.params.id - 1;
+  // DELETE: DELETE (remover um registro)
+  app.delete('/mensagens/:id', async (req, res) => {
+    const id = req.params.id;
 
-  delete mensagens[id];
+    await mensagensCollection.deleteOne({_id: ObjectId(id)});
 
-  res.send('Mensagem removida com sucesso.');
-});
+    res.send('Mensagem removida com sucesso.');
+  });
 
-app.listen(3000);
+  app.listen(3000);
 
 })();
